@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+@import "tailwindcss";
+
+:root {
+    color-scheme: light dark;
+}
+
+body {
+    @apply m-0 p-0 overflow-hidden;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button,
+input[type='number'] {
+    -webkit-appearance: none;
+    margin: 0;
+    -moz-appearance: textfield !important;
+}
+
+* {
+    @apply dark:text-white;
+    font-family: "Manrope", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.greyed {
+    @apply dark:text-slate-400 text-slate-500;
+}
+
+h1 {
+    @apply font-bold text-3xl;
+}
+
+h2 {
+    @apply font-semibold text-2xl;
+}
+
+h3 {
+    @apply font-semibold text-xl underline;
+}
+
+.panel {
+    @apply rounded-lg bg-white p-4 shadow-2xl dark:shadow-2xl/40 dark:bg-slate-700;
+}
+
+button {
+    @apply p-2 rounded-md bg-blue-500 text-white font-semibold cursor-pointer;
+    transition: background-color ease-in-out 300ms, translate ease-in-out 300ms, box-shadow ease-in-out 300ms;
+    &:hover {
+        @apply bg-blue-600 -translate-y-0.5 shadow-xl shadow-black/20;
+    }
+    &.confirm {
+        @apply bg-green-500;
+        &:hover {
+            @apply bg-green-600;
+        }
+    }
+}
+
+hr {
+    @apply my-2 border-t-gray-300;
+}
+
+input:not([type="radio"]), input[type="radio"] + label {
+    @apply rounded-md bg-slate-100 p-2 dark:bg-slate-600 transition-colors dark:border-b-red-500 border-b-red-300;
+    &:hover:not(:disabled):not(input[type="radio"]:disabled+&), &:focus, input[type="radio"]:checked + & {
+        background-color: light-dark(theme(color.slate.200), #516177)
+    }
+    &.form:not(.valid):not(:disabled):not(input[type="radio"]:disabled+&) {
+        @apply border-b-2;
+    }
+    &:disabled, input[type="radio"]:disabled + & {
+        @apply dark:bg-slate-600/50 bg-slate-100/50;
+    }
+}
+
+input[type="radio"]:checked:not(:disabled) + label {
+    @apply border-b-2;
+}
+input[type="radio"]:not(:disabled) + label.valid {
+    @apply border-b-green-500;
+}
+
+.page-enter-active,
+.page-leave-active {
+    transition: translate 0.4s;
+}
+.page-enter-from {
+    translate: calc(-1 * (50vw + 50%));
+}
+.page-leave-to {
+    translate: calc(50vw + 50%);
+}
