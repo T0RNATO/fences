@@ -1,6 +1,10 @@
 <script setup lang="ts" generic="T extends boolean">
 import type {Form} from "~/components/form/types";
 
+defineOptions({
+    inheritAttrs: false,
+})
+
 const props = defineProps<{
     form: Form
     name: string
@@ -34,6 +38,7 @@ props.form[props.name] = {
         <input :type="number ? 'number' : 'text'" v-model="value"
                :class="[{valid, 'text-right': number}, 'flex-grow form']"
                :disabled="Boolean(depends) && !form[depends as string].valid.value"
+               v-bind="$attrs"
         />
         {{units || ""}}
     </div>
