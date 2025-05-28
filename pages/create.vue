@@ -2,6 +2,33 @@
 import ProgressiveForm from "~/components/ProgressiveForm.vue";
 import Text from "~/components/form/Text.vue";
 import Radio from "~/components/form/Radio.vue";
+import type {ValidationFunction} from "~/components/form/types";
+
+function radioSelected(option: string, wholeNumber: boolean = false): ValidationFunction<number | string, Fields> {
+    if (wholeNumber) {
+        return (value, form) => form.pier_spacing.value.value !== option || (Boolean(value) && Number.isInteger(value))
+    }
+    return (value, form) => form.pier_spacing.value.value !== option || Boolean(value)
+}
+
+type Fields = {
+    length: number
+    max_height: number
+    pier_width: number
+    pier_height: number
+    panel_height: number
+    panel_thickness: number
+    pier_spacing: string
+    num_piers: "num_piers" | "distance" | "absolute_dist"
+    space_betw_piers: number
+    space_betw_piers_abs: number
+    different_final_spacing: "left" | "right"
+    is_gradient: "yes" | "no"
+    gradient: number
+    rise: number
+    run: number
+    comments: string
+}
 </script>
 
 <template>
@@ -13,23 +40,28 @@ import Radio from "~/components/form/Radio.vue";
                 Entries marked with a red underline require attention.
             </div>
             <div class="mt-2 sm:grid sm:grid-cols-[30%_70%] items-center gap-y-2 text-sm">
+                <!-- @vue-generic {Fields} -->
                 <ProgressiveForm #="{form}">
                     <h3 class="col-span-2">General</h3>
                     Property Frontage:<br class="max-sm:hidden">(Fence Length)
                     <Text :form="form" name="length" units="metres" :number="true"/>
+                    Maximum Height:<br class="max-sm:hidden">(For error checking)
+                    <Text :form="form" name="max_height" units="metres" :number="true" :no-validate="true"/>
                     Pier Width:
                     <Radio :form="form" name="pier_width" :options="{0.23: '230mm', 0.35: '350mm', 0.47: '470mm', 0.59: '590mm'}" depends="length"/>
                     Pier Height:
-                    <Text :form="form" name="pier_height" units="metres" :number="true"/>
-                    Maximum Height:<br class="max-sm:hidden">(For error checking)
-                    <Text :form="form" name="max_height" units="metres" :number="true" depends="pier_height"/>
+                    <Text :form="form" name="pier_height" units="metres" :number="true" depends="pier_width"
+                          :validate="value => (!form.max_height.value.value) || (value > form.max_height.value.value ?
+                            'Taller than maximum allowed height.' : Boolean(value))"/>
                     Fence Panel Height:
-                    <Text :form="form" name="panel_height" units="metres" :number="true" depends="pier_height"/>
+                    <Text :form="form" name="panel_height" units="metres" :number="true" depends="pier_height"
+                          :validate="value => (value > form.pier_height.value.value ?
+                            'Cannot be taller than the piers.' : Boolean(value))"/>
                     Fence Panel Thickness:
                     <Text :form="form" name="panel_thickness" units="millimetres" :number="true" depends="panel_height"/>
 
                     <h3 class="col-span-2">Pier Spacing</h3>
-                    <Radio :form="form" name="pier_spacing" class="col-span-2 flex-col" depends="pier_width" dots :options="{
+                    <Radio :form="form" name="pier_spacing" class="col-span-2" :vertical="true" depends="pier_width" dots :options="{
                         num_piers: 'Evenly space $a$ piers',
                         distance: 'Evenly space piers approx. $b$ metres apart',
                         absolute_dist: 'Space piers $c$ metres apart, with a different final spacing on the $d$'
@@ -37,24 +69,20 @@ import Radio from "~/components/form/Radio.vue";
                     }">
                         <template #a>
                             <Text :form="form" name="num_piers" :number="true"
-                                  :validate="value => form['pier_spacing'].value.value !== 'num_piers' || (Boolean(value) && Number.isInteger(value))"
-                                  depends="pier_width" class="!mx-1 h-8 w-12"
-                            />
+                                  :validate="radioSelected('num_piers', true)"
+                                  depends="pier_width" class="!mx-1 h-8 w-12"/>
                         </template> <template #b>
                             <Text :form="form" name="space_betw_piers" :number="true"
-                                  :validate="value => form['pier_spacing'].value.value !== 'distance' || Boolean(value)"
-                                  depends="pier_width" class="!mx-1 h-8 w-12"
-                            />
+                                  :validate="radioSelected('distance')"
+                                  depends="pier_width" class="!mx-1 h-8 w-12"/>
                         </template> <template #c>
                             <Text :form="form" name="space_betw_piers_abs" :number="true"
-                                  :validate="value => form['pier_spacing'].value.value !== 'absolute_dist' || Boolean(value)"
-                                  depends="pier_width" class="!mx-1 h-8 w-12"
-                            />
+                                  :validate="radioSelected('absolute_dist')"
+                                  depends="pier_width" class="!mx-1 h-8 w-12"/>
                         </template> <template #d>
                             <Radio :form="form" name="different_final_spacing" :options="{left: 'Left', right: 'Right'}"
-                                   :validate="value => form['pier_spacing'].value.value !== 'absolute_dist' || Boolean(value)"
-                                   depends="pier_width" class="!mx-1 h-8 w-12"
-                            />
+                                   :validate="radioSelected('absolute_dist')"
+                                   depends="pier_width" class="!mx-1 h-8 w-12"/>
                         </template>
                     </Radio>
 
@@ -64,14 +92,19 @@ import Radio from "~/components/form/Radio.vue";
                     Gradient:
                     <div class="flex gap-x-2 items-center">
                         <Text class="w-15" :form="form" name="gradient" units="%" :number="true" depends="is_gradient"
-                              :validate="value => form['is_gradient'].value.value === 'no' || form['rise'].valid.value || form['run'].valid.value || Boolean(value)"/>
+                              :validate="value => form.is_gradient.value.value === 'no' || form.rise.valid.value || form.run.valid.value || Boolean(value)"/>
                         or
                         <Text class="w-15" placeholder="rise" :form="form" name="rise" :number="true" depends="is_gradient"
-                              :validate="value => form['is_gradient'].value.value === 'no' || Boolean(form['gradient'].value.value) || Boolean(value)"/>
+                              :validate="value => form.is_gradient.value.value === 'no' || Boolean(form.gradient.value.value) || Boolean(value)"/>
                         /
                         <Text class="w-15" placeholder="run" :form="form" name="run" :number="true" depends="is_gradient"
-                              :validate="value => form['is_gradient'].value.value === 'no' || Boolean(form['gradient'].value.value) || Boolean(value)"/>
+                              :validate="value => form.is_gradient.value.value === 'no' || Boolean(form.gradient.value.value) || Boolean(value)"/>
                     </div>
+
+                    <h3 class="col-span-2">Submission</h3>
+                    <div class="h-20">Comments:</div>
+                    <Text :form="form" name="comments" class="h-20" :no-validate="true" multiline/>
+                    <button class="col-span-2">Submit</button>
                 </ProgressiveForm>
             </div>
         </div>
