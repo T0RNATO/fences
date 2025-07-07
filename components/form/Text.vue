@@ -1,71 +1,64 @@
-<script setup lang="ts" generic="T extends boolean, E extends Record<string, string | number>">
-import type {Form, ValidationFunction} from "~/components/form/types";
+<script setup lang="ts" generic="T extends boolean">
+import {type Form, Validity} from "~/components/form/types";
 
 defineOptions({
     inheritAttrs: false,
 })
 
 const props = defineProps<{
-    form: Form<E>
+    form: Form
     name: string
     number?: T
     units?: string
-    depends?: string
-    validate?: ValidationFunction<Type, E>
-    multiline?: boolean
-    noValidate?: boolean
+    depends?: string | {field: string, is: string}
+    validate?: (value: Type, form: Form) => boolean | Validity
+    error?: string
 }>();
 
 type Type = [T] extends [true] ? number : string;
 
 const value: Ref<Type> = ref(props.number ? null : "") as Ref<Type>;
 
-const errorMessage = ref<string>("");
-const valid = computed<boolean>(() => {
-    if (props.noValidate) {
-        return true;
-    }
-    if (props.depends && !props.form[props.depends].valid.value) {
-        return false;
-    }
-    if (props.validate) {
-        const validOrError = props.validate(value.value, props.form) || Boolean(value.value);
-        if (validOrError === true) {
-            errorMessage.value = "";
-            return true;
-        } else {
-            errorMessage.value = validOrError || "";
-            return false;
+const valid = computed<Validity>(() => {
+    if (props.depends) {
+        if (typeof props.depends === "string") {
+            if (props.form[props.depends].valid.value !== Validity.VALID) {
+                return Validity.INACTIVE;
+            }
+        } else if (props.form[props.depends.field].value.value !== props.depends.is) {
+            return Validity.INACTIVE;
         }
     }
-    return Boolean(value.value);
+    if (value.value === null || String(value.value).length === 0) return Validity.EMPTY;
+    if (props.validate) {
+        const validity = props.validate(value.value, props.form);
+        if (typeof validity === "boolean") {
+            return validity ? Validity.VALID : Validity.INVALID
+        }
+        return validity;
+    }
+    return Validity.VALID;
 })
 
-// @ts-ignore
 props.form[props.name] = {
     value, valid
 };
 </script>
 
 <template>
-    <div class="flex items-center gap-x-2">
-        <div class="flex-grow flex-col flex">
-            <input :type="number ? 'number' : 'text'" v-model="value"
-                   :class="[{valid, 'text-right': number}, ' form']"
-                   :disabled="Boolean(depends) && !form[depends as string].valid.value"
-                   v-bind="$attrs"
-                   v-if="!multiline"
-            />
-            <textarea :class="[{valid, 'text-right': number}, ' form']"
-                      :disabled="Boolean(depends) && !form[depends as string].valid.value"
-                      v-bind="$attrs" v-else
-            />
-            <span class="!text-red-400">{{errorMessage}}</span>
-        </div>
-        {{units || ""}}
+    <div class="grid items-center gap-x-2">
+        <input :type="number ? 'number' : 'text'" v-model="value"
+               :class="[{'text-right': number}, 'flex-grow form', Validity.toClass(valid)]"
+               :disabled="valid == Validity.INACTIVE"
+               v-bind="$attrs"
+        />
+        <span>{{units || ""}}</span>
+        <span class="dark:!text-red-400 !text-red-300" v-if="valid == Validity.INVALID">{{error}}</span>
     </div>
 </template>
 
 <style scoped>
-
+.grid {
+    grid-template-columns: auto min-content;
+}
 </style>

@@ -1,10 +1,26 @@
-export type Form<T extends Record<string, string | number>> = {
-    [P in keyof T]: Entry<T[P]>
-}
+export type Form = Record<string, Entry<any>>
 
 export type Entry<T extends string | number> = {
     value: Ref<T>,
-    valid: ComputedRef<boolean>
+    valid: ComputedRef<Validity>
 }
 
-export type ValidationFunction<T extends string | number, E extends Record<string, string | number>> = (value: T, form: Form<E>) => boolean | string;
+export enum Validity {
+    EMPTY,
+    INACTIVE,
+    INVALID,
+    VALID,
+}
+
+export namespace Validity {
+    const classes = {
+        [Validity.EMPTY]: "empty",
+        [Validity.INACTIVE]: "inactive",
+        [Validity.INVALID]: "invalid",
+        [Validity.VALID]: "valid"
+    } as const;
+
+    export function toClass(val: Validity) {
+        return classes[val];
+    }
+}

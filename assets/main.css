@@ -67,27 +67,31 @@ hr {
     @apply my-2 border-t-gray-300;
 }
 
-input:not([type="radio"]), input[type="radio"] + label, textarea {
-    @apply rounded-md bg-slate-100 p-2 dark:bg-slate-600 transition-colors dark:border-b-red-500 border-b-red-300;
-    &:not(label &) {
-        @apply min-h-10;
+input:not([type="radio"]), input[type="radio"] + label {
+    @apply rounded-md bg-slate-100 p-2 dark:bg-slate-600 transition-colors border-b-2;
+
+    /* Only mark valid radio buttons that are selected as green */
+    &.valid:not(label), input:checked + &.valid {
+        @apply dark:border-b-green-500 border-b-green-300;
     }
-    &:hover:not(:disabled):not(input[type="radio"]:disabled+&), &:focus, input[type="radio"]:checked + & {
-        background-color: light-dark(theme(color.slate.200), #516177)
+    input:not(:checked) + &.valid {
+        @apply border-b-transparent;
     }
-    &.form:not(.valid):not(:disabled):not(input[type="radio"]:disabled+&) {
-        @apply border-b-2;
+
+    &.invalid {
+        @apply dark:border-b-red-500 border-b-red-300;
     }
-    &:disabled, input[type="radio"]:disabled + & {
-        @apply dark:bg-slate-600/50 bg-slate-100/50;
+    &.empty {
+        @apply dark:border-b-sky-300 border-b-sky-300;
+    }
+    &.inactive, &:disabled {
+        @apply border-b-0 opacity-50;
     }
 }
 
-input[type="radio"]:checked:not(:disabled) + label {
-    @apply border-b-2;
-}
-input[type="radio"]:not(:disabled) + label.valid {
-    @apply border-b-green-500;
+/* Form elements that are inside a radio button */
+input[type="radio"] + label :is(input:not([type="radio"]), input[type="radio"] + label) {
+    @apply bg-white dark:bg-slate-700;
 }
 
 .page-enter-active,
@@ -99,4 +103,8 @@ input[type="radio"]:not(:disabled) + label.valid {
 }
 .page-leave-to {
     translate: calc(50vw + 50%);
+}
+
+a {
+    @apply cursor-pointer;
 }
