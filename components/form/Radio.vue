@@ -1,23 +1,40 @@
 <script setup lang="ts">
-import {type Form, Validity} from "~/components/form/types";
+import {All, type Depends, type Form, Not, Some, Validity} from "~/components/form/types";
 
 const props = defineProps<{
     form: Form,
     name: string,
     options: Record<string, string>,
-    depends?: string | {field: string, is: string}
+    depends?: Depends
     dots?: boolean,
     default?: string,
     validate?: (value: string, form: Form) => Validity | boolean,
 }>();
 
+function depDoesntMatch(dep: Depends): boolean {
+    if (dep instanceof Some) {
+        if (dep.deps.every(depDoesntMatch)) {
+            return true;
+        }
+    } else if (dep instanceof All) {
+        if (dep.deps.some(depDoesntMatch)) {
+            return true;
+        }
+    } else if (dep instanceof Not) {
+        return !depDoesntMatch(dep.dep);
+    } else if (typeof dep === "string") {
+        if (props.form.valid(dep).value !== Validity.VALID) {
+            return true;
+        }
+    } else if (props.form.value(dep.field).value !== dep.is) {
+        return true;
+    }
+    return false;
+}
+
 const valid = computed<Validity>(() => {
     if (props.depends) {
-        if (typeof props.depends === "string") {
-            if (props.form[props.depends].valid.value !== Validity.VALID) {
-                return Validity.INACTIVE;
-            }
-        } else if (props.form[props.depends.field].value.value !== props.depends.is) {
+        if (depDoesntMatch(props.depends)) {
             return Validity.INACTIVE;
         }
     }
@@ -34,9 +51,7 @@ const valid = computed<Validity>(() => {
 
 const value = ref(props.default || '');
 
-props.form[props.name] = {
-    value, valid
-};
+props.form.addField(props.name, valid, value);
 </script>
 
 <template>

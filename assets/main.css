@@ -108,3 +108,7 @@ input[type="radio"] + label :is(input:not([type="radio"]), input[type="radio"] +
 a {
     @apply cursor-pointer;
 }
+
+.err-text {
+    @apply dark:!text-red-400 !text-red-300;
+}

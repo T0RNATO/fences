@@ -4,16 +4,18 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --host",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.7",
-    "nuxt": "^3.17.3",
+    "@tailwindcss/vite": "^4.1.11",
+    "nuxt": "^3.17.6",
     "nuxt-auth-utils": "0.5.20",
-    "vue": "^3.5.13",
+    "three": "0.134",
+    "troisjs": "^0.3.4",
+    "vue": "^3.5.17",
     "vue-router": "^4.5.1"
   },
   "trustedDependencies": [

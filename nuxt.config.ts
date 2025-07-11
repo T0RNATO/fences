@@ -11,5 +11,15 @@ export default defineNuxtConfig({
     ]
   },
 
+  nitro: {
+    experimental: {
+      database: true,
+    },
+  },
+
+  imports: {
+    autoImport: true,
+  },
+
   modules: ["nuxt-auth-utils"],
 })
