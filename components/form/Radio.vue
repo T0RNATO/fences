@@ -62,7 +62,9 @@ props.form.addField(props.name, valid, value);
                    :disabled="valid === Validity.INACTIVE"
             >
             <label :for="`radio-${name}-${key}`" :class="[Validity.toClass(valid),'form flex items-center flex-wrap']">
-                <span class="inline-block rounded-full w-4 h-4 dark:bg-slate-700 bg-slate-300 mr-2 my-auto dot p-[3px]" v-if="dots"></span>
+                <span class="inline-flex items-center justify-center rounded-full w-4 h-4 bg-bg mr-2" v-if="dots">
+                    <span class="inner hidden rounded-full bg-bright w-2.5 h-2.5"></span>
+                </span>
                 <template v-for="(section, i) in display.split('$')">
                     <span v-if="i % 2 === 0">{{section}}</span>
                     <slot v-else :name="section"/>
@@ -73,13 +75,7 @@ props.form.addField(props.name, valid, value);
 </template>
 
 <style scoped>
-input:checked + label > span.dot::after {
-    background-color: light-dark(var(--color-slate-400), var(--color-slate-500));
-    content: '';
-    width: 10px;
-    height: 10px;
-    border-radius: 100%;
+input:checked + label > span > span.inner {
     display: inline-block;
-    translate: 0 -8px;
 }
 </style>

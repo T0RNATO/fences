@@ -34,9 +34,10 @@ export class Form<T extends Record<string, string | number>> {
     }
 }
 
-export type Fields = keyof MappedFields;
+export type FieldKeys = keyof Fields;
 
-export type MappedFields = {
+export type Fields = {
+    name: string;
     length: number;
     pier_width: string;
     pier_height: number;

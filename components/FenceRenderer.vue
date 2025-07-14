@@ -10,14 +10,14 @@ import {
     Scene,
     SMAAPass, SSAOPass, UnrealBloomPass
 } from "troisjs";
-import type {Form, MappedFields} from "~/components/form/types";
+import type {Form, Fields} from "~/components/form/types";
 import {Vector3} from "three";
 
 const renderer = useTemplateRef("renderer");
 const isDark = window?.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : false;
 
 const props = defineProps<{
-    form: Form<MappedFields>;
+    form: Form<Fields>;
 }>();
 
 function resetCamera() {

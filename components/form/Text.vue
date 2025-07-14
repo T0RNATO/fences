@@ -6,8 +6,8 @@ import {
     Some,
     Not,
     All,
-    type MappedFields,
-    type Fields
+    type Fields,
+    type FieldKeys
 } from "~/components/form/types";
 
 defineOptions({
@@ -15,12 +15,12 @@ defineOptions({
 })
 
 const props = defineProps<{
-    form: Form<MappedFields>
-    name: Fields
+    form: Form<Fields>
+    name: FieldKeys
     number?: T
     units?: string
     depends?: Depends
-    validate?: (value: Type, form: Form<MappedFields>) => boolean | Validity
+    validate?: (value: Type, form: Form<Fields>) => boolean | Validity
     error?: string
 }>();
 

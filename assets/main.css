@@ -3,6 +3,9 @@
 
 @theme {
     --breakpoint-mobile: 56.25rem; /* 900px */
+    --color-bg: light-dark(white, var(--color-slate-700));
+    --color-accent: light-dark(var(--color-slate-200), var(--color-slate-600));
+    --color-bright: light-dark(var(--color-slate-300), var(--color-slate-500));
 }
 
 :root {
@@ -46,7 +49,7 @@ h3 {
 }
 
 .panel {
-    @apply rounded-lg bg-white p-4 shadow-2xl dark:shadow-2xl/40 dark:bg-slate-700;
+    @apply rounded-lg bg-bg p-4 shadow-2xl dark:shadow-2xl/40;
 }
 
 button {
