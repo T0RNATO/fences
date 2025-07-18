@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const {data: submissions} = await useFetch("/api/submissions");
 </script>
 
 <template>
@@ -7,7 +8,10 @@
         <div v-if="loggedIn">
             <h2>Submissions</h2>
             <div class="flex gap-x-2">
-                <NuxtLink class="tile bg-bright hover:bg-accent" href="/auth/create">
+                <NuxtLink class="tile bg-t2 hover:bg-t3" v-for="submission in submissions">
+                    {{submission.name}}
+                </NuxtLink>
+                <NuxtLink class="tile bg-t4 hover:bg-t5" href="/auth/create">
                     <div class="text-6xl -mb-2">+</div>
                     Create New
                 </NuxtLink>

@@ -1,14 +1,14 @@
-<script setup lang="ts">
-import {All, type Depends, type Form, Not, Some, Validity} from "~/components/form/types";
+<script setup lang="ts" generic="Fields extends Record<string, any>">
+import {All, type Depends, type Form, Not, Some, Validity} from "~/components/form/form";
 
 const props = defineProps<{
-    form: Form,
+    form: Form<Fields>,
     name: string,
     options: Record<string, string>,
     depends?: Depends
     dots?: boolean,
     default?: string,
-    validate?: (value: string, form: Form) => Validity | boolean,
+    validate?: (value: string, form: Form<Fields>) => Validity | boolean,
 }>();
 
 function depDoesntMatch(dep: Depends): boolean {
@@ -51,7 +51,7 @@ const valid = computed<Validity>(() => {
 
 const value = ref(props.default || '');
 
-props.form.addField(props.name, valid, value);
+props.form.addField(props.name, valid, value as Ref<Fields[string]>);
 </script>
 
 <template>
@@ -62,8 +62,8 @@ props.form.addField(props.name, valid, value);
                    :disabled="valid === Validity.INACTIVE"
             >
             <label :for="`radio-${name}-${key}`" :class="[Validity.toClass(valid),'form flex items-center flex-wrap']">
-                <span class="inline-flex items-center justify-center rounded-full w-4 h-4 bg-bg mr-2" v-if="dots">
-                    <span class="inner hidden rounded-full bg-bright w-2.5 h-2.5"></span>
+                <span class="inline-flex items-center justify-center rounded-full w-4 h-4 bg-t1 mr-2" v-if="dots">
+                    <span class="inner hidden rounded-full bg-t4 w-2.5 h-2.5"></span>
                 </span>
                 <template v-for="(section, i) in display.split('$')">
                     <span v-if="i % 2 === 0">{{section}}</span>

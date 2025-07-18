@@ -1,5 +1,5 @@
 import {H3Error} from "h3";
-import {userValidation} from "~/server/plugins/database";
+import {User, userValidation} from "~/server/plugins/database";
 
 export default defineEventHandler(async (event) => {
     const db = useDatabase();
@@ -21,19 +21,20 @@ export default defineEventHandler(async (event) => {
     const hashedPassword = await hashPassword(password);
 
     try {
-        await db.sql`INSERT INTO users(email, password) VALUES (${email}, ${hashedPassword})`;
+        const user = (await db.sql<{ rows: User[] }>`INSERT INTO users(email, password) VALUES (${email}, ${hashedPassword})`).rows[0];
+
+        await setUserSession(event, {
+            user: {
+                email,
+                id: user.id,
+            },
+            loggedInAt: Date.now(),
+        });
+
+        // return sendRedirect(event, "/", 201);
+        return setResponseStatus(event, 201);
     } catch (err) {
         setResponseStatus(event, 400);
         return [{path: ["email"], message: "Email already has an associated account."}]
     }
-
-    await setUserSession(event, {
-        user: {
-            email,
-        },
-        loggedInAt: Date.now(),
-    });
-
-    // return sendRedirect(event, "/", 201);
-    return setResponseStatus(event, 201);
 })

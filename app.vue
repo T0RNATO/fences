@@ -21,4 +21,10 @@
 
 <script setup>
 import "assets/main.css";
+
+useHead({
+    htmlAttrs: {
+        lang: "en"
+    }
+})
 </script>

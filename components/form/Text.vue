@@ -1,14 +1,12 @@
-<script setup lang="ts" generic="T extends boolean">
+<script setup lang="ts" generic="T extends boolean, Fields extends Record<string, any>">
 import {
     type Depends,
     type Form,
     Validity,
     Some,
     Not,
-    All,
-    type Fields,
-    type FieldKeys
-} from "~/components/form/types";
+    All
+} from "~/components/form/form";
 
 defineOptions({
     inheritAttrs: false,
@@ -16,12 +14,14 @@ defineOptions({
 
 const props = defineProps<{
     form: Form<Fields>
-    name: FieldKeys
+    name: keyof Fields
+    display?: string
     number?: T
     units?: string
     depends?: Depends
     validate?: (value: Type, form: Form<Fields>) => boolean | Validity
     error?: string
+    multiline?: boolean
 }>();
 
 type Type = [T] extends [true] ? number : string;
@@ -66,15 +66,25 @@ const valid = computed<Validity>(() => {
     return Validity.VALID;
 })
 
-props.form.addField(props.name, valid, value);
+props.form.addField(props.name, valid, value as Ref<Fields[string]>);
 </script>
 
 <template>
+    <label :for="name as string" v-if="display || $slots.default">
+        <slot>{{display}}</slot>
+    </label>
     <div class="grid items-center gap-x-2">
         <input :type="number ? 'number' : 'text'" v-model="value"
                :class="[{'text-right': number}, 'flex-grow form', Validity.toClass(valid)]"
                :disabled="valid == Validity.INACTIVE"
                v-bind="$attrs"
+               v-if="!multiline"
+               :id="name as string"
+        />
+        <textarea v-else v-model="value"
+                  :class="['flex-grow form h-24', Validity.toClass(valid)]"
+                  :disabled="valid == Validity.INACTIVE"
+                  v-bind="$attrs"
         />
         <span>{{units || ""}}</span>
         <span class="err-text" v-if="valid == Validity.INVALID">{{error}}</span>

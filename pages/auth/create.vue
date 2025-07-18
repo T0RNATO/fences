@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import Text from "~/components/form/Text.vue";
 import Radio from "~/components/form/Radio.vue";
-import {type FieldKeys, Form, not, some, all, Validity, type Fields} from "~/components/form/types";
+import {Form, not, some, all, Validity} from "~/components/form/form";
 import FenceRenderer from "~/components/FenceRenderer.vue";
+import type {FieldKey, Fields} from "~/components/form/submission";
 
 const form = new Form<Fields>();
 
-function valid(s: FieldKeys): boolean {
+function valid(s: FieldKey): boolean {
     return form.valid(s).value === Validity.VALID;
 }
-function fieldIs(field: FieldKeys, value: string): boolean {
+function fieldIs(field: FieldKey, value: string): boolean {
     return form.value(field).value === value;
 }
+
+const router = useRouter();
 
 form.onChange(() => {
     if (valid("panel_thickness") && valid('pier_spacing')) {
@@ -21,15 +24,32 @@ form.onChange(() => {
             (fieldIs('pier_spacing', 'absolute_dist') && valid('space_betw_piers_abs') && valid('different_final_spacing'))
         ) {
             if (fieldIs('is_gradient', 'no') || valid('gradient') || (valid('rise') && valid('run'))) {
-                canRender.value = true;
+                formValid.value = true;
                 return;
             }
         }
     }
-    canRender.value = false;
+    formValid.value = false;
 });
 
-const canRender = ref(false);
+const formValid = ref(false);
+
+function submit() {
+    if (formValid.value) {
+        $fetch.raw("/api/submit", {
+            method: "POST",
+            body: JSON.stringify(form.getData()),
+        }).then((res) => {
+            if (res.ok) {
+                router.push("/");
+            }
+        });
+    }
+}
+
+useHead({
+    title: "Fence Submission",
+})
 </script>
 
 <template>
@@ -39,22 +59,19 @@ const canRender = ref(false);
             <div class="greyed text-sm max-mobile:after:content-['_Note_that_this_page_is_unlikely_to_work_well_on_mobile.']">
                 For any enquiries not fulfilled by this form and the comments box, please contact foo@bar.com.
             </div>
-            <div class="mt-2 sm:grid sm:grid-cols-[30%_70%] items-center gap-y-2 text-sm">
+            <div class="my-2 sm:grid sm:grid-cols-[30%_70%] items-center gap-y-2 text-sm">
                 <h3>General</h3>
-                Submission Name:
-                <Text :form="form" name="name" maxlength="127"/>
-                Property Frontage:<br class="max-sm:hidden">(Fence Length)
-                <Text :form="form" name="length" units="metres" :number="true" :validate="value => value > 0" error="Must be >0"/>
+                <Text :form="form" name="name" maxlength="127" display="Submission Name:"/>
+                <Text :form="form" name="length" units="metres" :number="true" :validate="value => value > 0" error="Must be >0">
+                    Property Frontage:<br class="max-sm:hidden">(Fence Length)
+                </Text>
                 Pier Width:
                 <Radio :form="form" name="pier_width" :options="{0.23: '230mm', 0.35: '350mm', 0.47: '470mm', 0.59: '590mm'}" depends="length"/>
-                Pier Height:
-                <Text :form="form" name="pier_height" units="metres" :number="true"/>
-                Maximum Height:<br class="max-sm:hidden">(For error checking)
-                <Text :form="form" name="max_height" units="metres" :number="true" depends="pier_height"/>
-                Fence Panel Height:
-                <Text :form="form" name="panel_height" units="metres" :number="true" depends="pier_height"/>
-                Fence Panel Thickness:
-                <Text :form="form" name="panel_thickness" units="millimetres" :number="true" depends="panel_height"/>
+                <Text :form="form" name="pier_height" units="metres" :number="true" display="Pier Height:"/>
+<!--                Maximum Height:<br class="max-sm:hidden">(For error checking)-->
+<!--                <Text :form="form" name="max_height" units="metres" :number="true" depends="pier_height"/>-->
+                <Text :form="form" name="panel_height" units="metres" :number="true" depends="pier_height" display="Fence Panel Height:"/>
+                <Text :form="form" name="panel_thickness" units="millimetres" :number="true" depends="panel_height" display="Fence Panel Thickness:"/>
 
                 <h3>Pier Spacing</h3>
                 <Radio :form="form" name="pier_spacing" class="col-span-2 flex-col" depends="pier_width" dots :options="{
@@ -67,18 +84,22 @@ const canRender = ref(false);
                         <Text :form="form" name="num_piers" :number="true"
                               :validate="value => Boolean(value) && Number.isInteger(value)"
                               :depends="{field: 'pier_spacing', is: 'num_piers'}" class="!mx-1 h-8 w-12"
+                              aria-label="Number of piers"
                         />
                     </template> <template #b>
                         <Text :form="form" name="space_betw_piers" :number="true"
                               :depends="{field: 'pier_spacing', is: 'distance'}" class="!mx-1 h-8 w-12"
+                              aria-label="Approximate space between piers"
                         />
                     </template> <template #c>
                         <Text :form="form" name="space_betw_piers_abs" :number="true"
                               :depends="{field: 'pier_spacing', is: 'absolute_dist'}" class="!mx-1 h-8 w-12"
+                              aria-label="Exact space between piers"
                         />
                     </template> <template #d>
                         <Radio :form="form" name="different_final_spacing" :options="{left: 'Left', right: 'Right'}"
                                :depends="{field: 'pier_spacing', is: 'absolute_dist'}" class="!mx-1 h-8 w-12"
+                               aria-label="Side for different final spacing"
                         />
                     </template>
                 </Radio>
@@ -89,30 +110,36 @@ const canRender = ref(false);
                 Gradient:
                 <div class="flex gap-x-2 items-center">
                     <Text class="w-15" :form="form" name="gradient" units="%" :number="true"
-                          :depends="all({field: 'is_gradient', is: 'yes'}, some(not('rise'), not('run')))"/>
+                          :depends="all({field: 'is_gradient', is: 'yes'}, some(not('rise'), not('run')))"
+                          aria-label="Gradient Percentage" />
                     or
                     <Text class="w-15" placeholder="rise" :form="form" name="rise" :number="true"
-                          :depends="all({field: 'is_gradient', is: 'yes'}, not('gradient'))"/>
+                          :depends="all({field: 'is_gradient', is: 'yes'}, not('gradient'))"
+                          aria-label="Gradient Rise" />
                     /
                     <Text class="w-15" placeholder="run" :form="form" name="run" :number="true"
-                          :depends="all({field: 'is_gradient', is: 'yes'}, not('gradient'))"/>
+                          :depends="all({field: 'is_gradient', is: 'yes'}, not('gradient'))"
+                          aria-label="Gradient Run" />
                 </div>
                 <h3>Submission</h3>
-                Comments For Architect:
+                <div class="col-span-2">
+                    <Text :form="form" name="comments" multiline display="Comments For Architect:"/>
+                </div>
             </div>
+            <button class="mt-2" :disabled="!formValid" @click="submit">Submit!</button>
         </div>
-        <div class="aspect-square mobile:w-1/2 max-mobile:h-1/2 bg-bright rounded-lg p-4 relative">
+        <div class="aspect-square mobile:w-1/2 max-mobile:h-1/2 bg-t4 rounded-lg p-4 relative">
             <ClientOnly>
-                <FenceRenderer v-if="canRender" :form="form"/>
+                <FenceRenderer v-if="formValid" :form="form"/>
             </ClientOnly>
-            <div v-if="!canRender">Please fill out the form to get a preview.</div>
+            <div v-if="!formValid">Please fill out the form to see a preview or submit.</div>
         </div>
     </div>
 </template>
 
 <style scoped>
 .main {
-    scrollbar-color: var(--color-bright) transparent;
+    scrollbar-color: var(--color-t4) transparent;
 }
 h3 {
     grid-column: span 2 / span 2;

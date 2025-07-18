@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
     await setUserSession(event, {
         user: {
             email,
+            id: user.id
         },
         loggedInAt: Date.now(),
     })
