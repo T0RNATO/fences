@@ -1,5 +1,6 @@
+<!-- A set of radio buttons in a form -->
 <script setup lang="ts" generic="Fields extends Record<string, any>">
-import {All, type Depends, type Form, Not, Some, Validity} from "~/components/form/form";
+import {dependencyIsNotSatisfied, type Depends, type Form, Validity} from "~/components/form/form";
 
 const props = defineProps<{
     form: Form<Fields>,
@@ -11,30 +12,9 @@ const props = defineProps<{
     validate?: (value: string, form: Form<Fields>) => Validity | boolean,
 }>();
 
-function depDoesntMatch(dep: Depends): boolean {
-    if (dep instanceof Some) {
-        if (dep.deps.every(depDoesntMatch)) {
-            return true;
-        }
-    } else if (dep instanceof All) {
-        if (dep.deps.some(depDoesntMatch)) {
-            return true;
-        }
-    } else if (dep instanceof Not) {
-        return !depDoesntMatch(dep.dep);
-    } else if (typeof dep === "string") {
-        if (props.form.valid(dep).value !== Validity.VALID) {
-            return true;
-        }
-    } else if (props.form.value(dep.field).value !== dep.is) {
-        return true;
-    }
-    return false;
-}
-
 const valid = computed<Validity>(() => {
     if (props.depends) {
-        if (depDoesntMatch(props.depends)) {
+        if (dependencyIsNotSatisfied(props.form, props.depends)) {
             return Validity.INACTIVE;
         }
     }

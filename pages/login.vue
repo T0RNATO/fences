@@ -4,7 +4,6 @@ const password = ref('');
 
 const validationErrors: Ref<Record<string, string>> = ref({});
 const route = useRoute();
-const router = useRouter();
 
 async function submit(path: string) {
     const res = await $fetch.raw(`/api/${path}`, {
@@ -21,8 +20,8 @@ async function submit(path: string) {
             validationErrors.value[error.path[0]] = error.message;
         }
     } else if (res.ok) {
-        // doing this instead of using the router so that the navbar re-renders
-        // (I'm sure there's an intended way to do it but eh)
+        // Doing this instead of using the router so that the navbar re-renders with the correct text
+        // (I'm sure there's an intended way to do it but idk what it is)
         location.pathname = decodeURI(route.query['redirect'] as string || "/");
     }
 }
@@ -34,8 +33,10 @@ async function submit(path: string) {
     <div class="panel min-md:w-90 w-full">
         <div class="grid grid-cols-[30%_70%] gap-2 items-center">
             <span class="col-span-2 text-sm" v-if="'redirect' in route.query">You must log in to access this page.</span>
+
             Email: <input type="text" v-model="email" @keyup.enter="submit('login')">
             <span class="err-text" v-if="validationErrors['email']">{{validationErrors['email']}}</span>
+
             Password: <input type="password" v-model="password" @keyup.enter="submit('login')">
             <span class="err-text" v-if="validationErrors['password']">{{ validationErrors['password'] }}</span>
         </div>

@@ -1,5 +1,14 @@
 import {z} from "zod";
 
+declare module '#auth-utils' {
+    interface User {
+        email: string,
+        id: number,
+    }
+}
+
+// Runs on server startup, creates DB tables
+// If you're running this locally, look in ~/.data/db.sqlite
 export default defineNitroPlugin(async () => {
     const db = useDatabase()
 
@@ -11,7 +20,8 @@ export default defineNitroPlugin(async () => {
     );`
 
     await db.sql`
-    CREATE TABLE IF NOT EXISTS fields (
+    CREATE TABLE IF NOT EXISTS submissions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         user integer not null,
         name TEXT NOT NULL,
         length REAL NOT NULL,
@@ -40,7 +50,32 @@ export interface User {
     id: number,
 }
 
-export const userValidation = z.object({
+// Zod (JS object validation library) schemas for the same database objects
+export const UserSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8),
-}).parse;
+});
+
+export const FieldsSchema = z.object({
+    id: z.number().optional(),
+    name: z.string(),
+    length: z.number(),
+    pier_width: z.string(),
+    pier_height: z.number(),
+    // max_height: z.number(),
+    panel_height: z.number(),
+    panel_thickness: z.number(),
+    pier_spacing: z.enum(['num_piers', 'distance', 'absolute_dist']),
+    num_piers: z.number().nullable().optional(),
+    space_betw_piers: z.number().nullable().optional(),
+    space_betw_piers_abs: z.number().nullable().optional(),
+    different_final_spacing: z.enum(['left', 'right']).nullable().optional(),
+    is_gradient: z.enum(['yes', 'no']),
+    gradient: z.number().nullable().optional(),
+    rise: z.number().nullable().optional(),
+    run: z.number().nullable().optional(),
+    comments: z.string().nullable().optional(),
+}).strip();
+
+export type Fields = z.infer<typeof FieldsSchema>;
+export type FieldKey = keyof Fields;

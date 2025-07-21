@@ -1,5 +1,13 @@
 <script setup lang="ts">
-const {data: submissions} = await useFetch("/api/submissions");
+import type {Fields} from "~/server/plugins/database";
+
+const fetch = await useFetch("/api/submissions");
+// @ts-ignore
+const submissions: Ref<Fields[]> = fetch.data;
+
+useHead({
+    title: "Fence Site"
+})
 </script>
 
 <template>
@@ -8,7 +16,7 @@ const {data: submissions} = await useFetch("/api/submissions");
         <div v-if="loggedIn">
             <h2>Submissions</h2>
             <div class="flex gap-x-2">
-                <NuxtLink class="tile bg-t2 hover:bg-t3" v-for="submission in submissions">
+                <NuxtLink class="tile bg-t2 hover:bg-t3" v-for="submission in submissions" :href="`/auth/create?edit=${submission.id}`">
                     {{submission.name}}
                 </NuxtLink>
                 <NuxtLink class="tile bg-t4 hover:bg-t5" href="/auth/create">

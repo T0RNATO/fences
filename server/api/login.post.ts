@@ -1,18 +1,17 @@
-import {User, userValidation} from "~/server/plugins/database";
+import {User, UserSchema} from "~/server/plugins/database";
 
+// Logs a user into an existing account
 export default defineEventHandler(async (event) => {
     const db = useDatabase();
 
-    let body;
+    const validation = await readValidatedBody(event, UserSchema.safeParse);
 
-    try {
-        body = await readValidatedBody(event, userValidation);
-    } catch (err) {
-        setResponseStatus(event, 400);
+    if (!validation.success) {
+        setResponseStatus(event, 400)
         return [{path: ["password"], message: "Invalid credentials."}]
     }
 
-    const {email, password} = body;
+    const {email, password} = validation.data;
 
     const user = await db.sql<{ rows: User[] }>`SELECT * FROM users WHERE email = ${email}`.then(result => result.rows[0])
 

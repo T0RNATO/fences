@@ -1,12 +1,6 @@
+<!-- A text/number field in a form -->
 <script setup lang="ts" generic="T extends boolean, Fields extends Record<string, any>">
-import {
-    type Depends,
-    type Form,
-    Validity,
-    Some,
-    Not,
-    All
-} from "~/components/form/form";
+import {dependencyIsNotSatisfied, type Depends, type Form, Validity} from "~/components/form/form";
 
 defineOptions({
     inheritAttrs: false,
@@ -28,30 +22,10 @@ type Type = [T] extends [true] ? number : string;
 
 const value: Ref<Type> = ref(props.number ? null : "") as Ref<Type>;
 
-function depDoesntMatch(dep: Depends): boolean {
-    if (dep instanceof Some) {
-        if (dep.deps.every(depDoesntMatch)) {
-            return true;
-        }
-    } else if (dep instanceof All) {
-        if (dep.deps.some(depDoesntMatch)) {
-            return true;
-        }
-    } else if (dep instanceof Not) {
-        return !depDoesntMatch(dep.dep);
-    } else if (typeof dep === "string") {
-        if (props.form.valid(dep).value !== Validity.VALID) {
-            return true;
-        }
-    } else if (props.form.value(dep.field).value !== dep.is) {
-        return true;
-    }
-    return false;
-}
-
+// I should probably extract this to a different file since it's duplicated in Radio.vue, but I don't want to break reactivity
 const valid = computed<Validity>(() => {
     if (props.depends) {
-        if (depDoesntMatch(props.depends)) {
+        if (dependencyIsNotSatisfied(props.form, props.depends)) {
             return Validity.INACTIVE;
         }
     }
@@ -71,7 +45,7 @@ props.form.addField(props.name, valid, value as Ref<Fields[string]>);
 
 <template>
     <label :for="name as string" v-if="display || $slots.default">
-        <slot>{{display}}</slot>
+        <slot>{{ display }}</slot>
     </label>
     <div class="grid items-center gap-x-2">
         <input :type="number ? 'number' : 'text'" v-model="value"
@@ -86,8 +60,8 @@ props.form.addField(props.name, valid, value as Ref<Fields[string]>);
                   :disabled="valid == Validity.INACTIVE"
                   v-bind="$attrs"
         />
-        <span>{{units || ""}}</span>
-        <span class="err-text" v-if="valid == Validity.INVALID">{{error}}</span>
+        <span>{{ units || "" }}</span>
+        <span class="err-text" v-if="valid == Validity.INVALID">{{ error }}</span>
     </div>
 </template>
 

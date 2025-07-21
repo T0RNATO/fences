@@ -1,12 +1,15 @@
+<!-- The page on which fence submissions are made. Require authorisation, hence the file path. See ~/middleware/auth.global.ts -->
 <script setup lang="ts">
 import Text from "~/components/form/Text.vue";
 import Radio from "~/components/form/Radio.vue";
 import {Form, not, some, all, Validity} from "~/components/form/form";
 import FenceRenderer from "~/components/FenceRenderer.vue";
-import type {FieldKey, Fields} from "~/components/form/submission";
+import type {Fields, FieldKey} from "~/server/plugins/database";
 
+// @ts-ignore
 const form = new Form<Fields>();
 
+// Util functions for checking overall form validity
 function valid(s: FieldKey): boolean {
     return form.valid(s).value === Validity.VALID;
 }
@@ -14,8 +17,39 @@ function fieldIs(field: FieldKey, value: string): boolean {
     return form.value(field).value === value;
 }
 
+const route = useRoute();
 const router = useRouter();
 
+// Fetch the submission being edited, if there is one
+// Janky ternary statement is just so I don't have to bother about scope inside an if statement
+const editData = ("edit" in route.query && !Number.isNaN(Number.parseInt(route.query["edit"] as string))) ? await useFetch<Fields>("/api/submissions", {
+    method: "POST",
+    body: {
+        id: Number.parseInt(route.query["edit"] as string)
+    }
+}) : null;
+
+if (editData) {
+    // Fill the form with the edited submission's data
+    if (editData.pending.value) {
+        // This code path theoretically never runs since SSR is active, and useFetch doesn't use a network request, but I put it here for safety
+        watch(editData.data as Ref<Fields>, fillFormData);
+    } else {
+        fillFormData(editData.data.value!);
+    }
+}
+
+function fillFormData(fields: Fields) {
+    form.setValues(fields);
+    nextTick(() => {
+        // If it was a valid submission when it was submitted, it's valid now.
+        // Also, setting the values like that doesn't trigger a reactive rerender
+        formValid.value = true;
+    })
+}
+
+// Re-assess overall form validity on every update.
+// This should really be reactive but I'm hacking around Vue's reactivity system too much for that too work.
 form.onChange(() => {
     if (valid("panel_thickness") && valid('pier_spacing')) {
         if (
@@ -54,7 +88,12 @@ useHead({
 
 <template>
     <div class="panel w-full h-full flex mobile:flex-row flex-col gap-x-2">
-        <div class="mobile:w-1/2 max-mobile:h-1/2 pb-2 pr-2 overflow-y-auto main">
+        <div class="mobile:w-1/2 max-mobile:h-1/2 pb-2 pr-2 overflow-y-auto main relative">
+            <!-- Again, theoretically never renders, but it's good to have for safety -->
+            <div class="absolute w-full h-full flex items-center justify-center z-10 bg-t5/70 rounded-md flex-col gap-y-2" v-if="editData && editData.pending.value">
+                <div class="loader"></div>
+                Loading Submission Data
+            </div>
             <h2>Create Fence Model</h2>
             <div class="greyed text-sm max-mobile:after:content-['_Note_that_this_page_is_unlikely_to_work_well_on_mobile.']">
                 For any enquiries not fulfilled by this form and the comments box, please contact foo@bar.com.
@@ -80,6 +119,7 @@ useHead({
                     absolute_dist: 'Space piers $c$ metres apart, with a different final spacing on the $d$'
                     // manual setting?
                 }">
+                    <!-- These are slotted in where the $letters$ are above - see ~/components/Radio.vue -->
                     <template #a>
                         <Text :form="form" name="num_piers" :number="true"
                               :validate="value => Boolean(value) && Number.isInteger(value)"
@@ -126,9 +166,14 @@ useHead({
                     <Text :form="form" name="comments" multiline display="Comments For Architect:"/>
                 </div>
             </div>
-            <button class="mt-2" :disabled="!formValid" @click="submit">Submit!</button>
+            <button class="mt-2" :disabled="!formValid" @click="submit">
+                {{editData ? 'Save Changes' : "Submit!"}}
+            </button>
         </div>
         <div class="aspect-square mobile:w-1/2 max-mobile:h-1/2 bg-t4 rounded-lg p-4 relative">
+            <!-- We don't want the server trying to render the fence! -->
+            <!-- It doesn't have access to WebGL or anything so would just crash -->
+            <!-- That one took a bit of debugging.... -->
             <ClientOnly>
                 <FenceRenderer v-if="formValid" :form="form"/>
             </ClientOnly>

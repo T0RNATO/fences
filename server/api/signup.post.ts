@@ -1,22 +1,17 @@
-import {H3Error} from "h3";
-import {User, userValidation} from "~/server/plugins/database";
+import {User, UserSchema} from "~/server/plugins/database";
 
+// Logs a user into a newly created account
 export default defineEventHandler(async (event) => {
     const db = useDatabase();
 
-    let body;
+    const validation = await readValidatedBody(event, UserSchema.safeParse);
 
-    try {
-        body = await readValidatedBody(event, userValidation);
-    } catch (err) {
-        if (err instanceof H3Error) {
-            setResponseStatus(event, 400);
-            return err.data.issues;
-        }
-        throw err;
+    if (!validation.success) {
+        setResponseStatus(event, 400)
+        return validation.error.issues
     }
 
-    const {email, password} = body;
+    const {email, password} = validation.data;
 
     const hashedPassword = await hashPassword(password);
 
@@ -31,7 +26,6 @@ export default defineEventHandler(async (event) => {
             loggedInAt: Date.now(),
         });
 
-        // return sendRedirect(event, "/", 201);
         return setResponseStatus(event, 201);
     } catch (err) {
         setResponseStatus(event, 400);

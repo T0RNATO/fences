@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
 @import "tailwindcss";
 
-/* I don't know why Webstorm doesn't recognise light-dark in 2025 */
+/* For some reason Webstorm doesn't recognise light-dark()... in 2025 */
 /*noinspection CssInvalidFunction*/
 @theme {
     /* Courtesy of https://fullwindcss.com/ */
@@ -101,7 +101,7 @@ hr {
 input:not([type="radio"]), input[type="radio"] + label, textarea {
     @apply rounded-md bg-slate-100 p-2 dark:bg-slate-600 transition-colors border-b-2;
 
-    /* Only mark valid radio buttons that are selected as green */
+    /* Only mark valid radio buttons that are selected, as green */
     &.valid:not(label), input:checked + &.valid {
         @apply dark:border-b-green-500 border-b-green-300;
     }
@@ -143,4 +143,34 @@ a {
 /*noinspection CssInvalidFunction*/
 .err-text {
     color: light-dark(#ec0606, #fe898b);
+}
+
+/* Courtesy of https://css-loaders.com/spinner/ */
+.loader {
+    width: 50px;
+    aspect-ratio: 1;
+    display: grid;
+}
+.loader::before,
+.loader::after {
+    content:"";
+    grid-area: 1/1;
+    --c:no-repeat radial-gradient(farthest-side,#25b09b 92%,#0000);
+    background:
+            var(--c) 50%  0,
+            var(--c) 50%  100%,
+            var(--c) 100% 50%,
+            var(--c) 0    50%;
+    background-size: 12px 12px;
+    animation: l12 1s infinite;
+}
+.loader::before {
+    margin: 4px;
+    filter: hue-rotate(45deg);
+    background-size: 8px 8px;
+    animation-timing-function: linear
+}
+
+@keyframes l12 {
+    100%{transform: rotate(.5turn)}
 }
