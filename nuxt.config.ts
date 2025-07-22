@@ -15,6 +15,33 @@ export default defineNuxtConfig({
     experimental: {
       database: true,
     },
+
+    preset: "cloudflare_module",
+    cloudflare: {
+      deployConfig: true,
+      nodeCompat: true,
+      wrangler: {
+        name: "tornato-fences",
+      },
+    },
+
+    database: {
+      default: {
+        connector: "cloudflare-d1",
+        options: {
+          bindingName: "DB",
+        }
+      }
+    },
+
+    devDatabase: {
+      default: {
+        connector: "sqlite",
+        options: {
+          name: "db",
+        }
+      }
+    }
   },
 
   imports: {
