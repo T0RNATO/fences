@@ -82,13 +82,12 @@ const range = (n: number) => new Array(n).fill(n);
                 <!-- The middle piers, either weighted on the left or right depending on user selection -->
                 <Box :height="form.raw('pier_height')" :width="Number(form.raw('pier_width'))" :depth="Number(form.raw('pier_width'))"
                      v-for="(_, i) in range(Math.floor(form.raw('length') / form.raw('space_betw_piers_abs')!) - 1)"
-                     v-if="form.raw('different_final_spacing') === 'right'"
-                     :position="new Vector3((i + 1) * form.raw('space_betw_piers_abs')!, form.raw('pier_height') / 2, 0)"
-                ><LambertMaterial/></Box>
-                <Box :height="form.raw('pier_height')" :width="Number(form.raw('pier_width'))" :depth="Number(form.raw('pier_width'))"
-                     v-for="(_, i) in range(Math.floor(form.raw('length') / form.raw('space_betw_piers_abs')!) - 1)"
-                     v-else
-                     :position="new Vector3(form.raw('length') - ((i + 1) * form.raw('space_betw_piers_abs')!), form.raw('pier_height') / 2, 0)"
+                     :position="new Vector3(
+                        form.raw('different_final_spacing') === 'right' ?
+                            (i + 1) * form.raw('space_betw_piers_abs')! :
+                            form.raw('length') - ((i + 1) * form.raw('space_betw_piers_abs')!),
+                        form.raw('pier_height') / 2, 0
+                     )"
                 ><LambertMaterial/></Box>
 
                 <!-- The rightmost pier -->

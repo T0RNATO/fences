@@ -8,8 +8,8 @@ export class Form<Fields extends Record<string, string | number>> {
 
     constructor() {}
 
-    // Internal method. Adds an element to this form.
-    public addField<Name extends keyof Fields>(name: Name, valid: ComputedRef<Validity>, value: Ref<Fields[Name]>) {
+    // Non-user-facing method. Adds an element to this form.
+    private addField<Name extends keyof Fields>(name: Name, valid: ComputedRef<Validity>, value: Ref<Fields[Name]>) {
         if (name in this.fields) {
             // @ts-ignore
             value.value = this.fields[name];

@@ -146,7 +146,7 @@ useHead({
 
                 <h3>Property Gradient</h3>
                 Gradient Present:
-                <Radio :form="form" name="is_gradient" :options="{yes: 'Yes', no: 'No'}" depends="pier_spacing" default="no"/>
+                <Radio :form="form" name="is_gradient" :options="{no: 'No', yes: 'Yes'}" depends="pier_spacing" default="no"/>
                 Gradient:
                 <div class="flex gap-x-2 items-center">
                     <Text class="w-15" :form="form" name="gradient" units="%" :number="true"
