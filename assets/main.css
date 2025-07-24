@@ -174,3 +174,13 @@ a {
 @keyframes l12 {
     100%{transform: rotate(.5turn)}
 }
+
+.green {
+    @apply !text-lime-400 underline underline-offset-4 decoration-wavy;
+    font-weight: inherit !important;
+}
+
+.title-green {
+    @apply !text-lime-700 dark:!text-lime-600;
+    font-weight: inherit !important;
+}

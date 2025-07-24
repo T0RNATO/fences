@@ -25,6 +25,10 @@ async function submit(path: string) {
         location.pathname = decodeURI(route.query['redirect'] as string || "/");
     }
 }
+
+useHead({
+    title: "Log In"
+})
 </script>
 
 <template>

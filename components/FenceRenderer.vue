@@ -11,7 +11,6 @@ import {
     Scene,
 } from "troisjs";
 import type {Form} from "~/components/form/form";
-import {Vector3} from "three";
 import type {Fields} from "~/server/plugins/database";
 
 // The <Renderer> element
@@ -49,6 +48,27 @@ watch(props.form.value('length'), resetCamera);
 watch(props.form.value('pier_height'), resetCamera);
 
 const range = (n: number) => new Array(n).fill(n);
+
+const gradient = computed(() => {
+    return props.form.raw("is_gradient") == "no" ? 0 :
+        (props.form.raw("gradient")! / 100 || props.form.raw("rise")! / props.form.raw("run")!)
+})
+
+const pierSize = computed(() => {
+    return {
+        width: Number(props.form.raw('pier_width')),
+        height: props.form.raw('pier_height'),
+        depth: Number(props.form.raw('pier_width')),
+    }
+})
+
+function vec(x: number, y?: number) {
+    return {
+        x,
+        y: y || props.form.raw('pier_height') / 2 + gradient.value * x,
+        z: 0
+    }
+}
 </script>
 
 <template>
@@ -61,43 +81,40 @@ const range = (n: number) => new Array(n).fill(n);
             <PointLight :position="{ y: -1000, z: -800, x: -1200 }" color="#fffae3" :intensity="0.5"/>
 
             <!-- "Number of Piers" spacing option -->
-            <Box v-if="form.raw('pier_spacing') === 'num_piers'" :height="form.raw('pier_height')" :width="Number(form.raw('pier_width'))" :depth="Number(form.raw('pier_width'))"
+            <Box v-if="form.raw('pier_spacing') === 'num_piers'" v-bind="pierSize"
                  v-for="(total, i) in range(form.raw('num_piers')!)"
-                 :position="new Vector3(i * (form.raw('length') / (total - 1)), form.raw('pier_height') / 2, 0)"
+                 :position="vec(i * (form.raw('length') / (total - 1)))"
             ><LambertMaterial/></Box>
 
             <!-- "Approximate Distance Between Piers" spacing option -->
-            <Box v-else-if="form.raw('pier_spacing') === 'distance'" :height="form.raw('pier_height')" :width="Number(form.raw('pier_width'))" :depth="Number(form.raw('pier_width'))"
+            <Box v-else-if="form.raw('pier_spacing') === 'distance'" v-bind="pierSize"
                  v-for="(total, i) in range(Math.round(form.raw('length') / form.raw('space_betw_piers')!))"
-                 :position="new Vector3(i * (form.raw('length') / (total - 1)), form.raw('pier_height') / 2, 0)"
+                 :position="vec(i * (form.raw('length') / (total - 1)))"
             ><LambertMaterial/></Box>
 
             <!-- "Absolute Distance Between Piers" spacing option -->
             <template v-else-if="form.raw('pier_spacing') === 'absolute_dist'">
                 <!-- The leftmost pier -->
-                <Box :height="form.raw('pier_height')" :width="Number(form.raw('pier_width'))" :depth="Number(form.raw('pier_width'))"
-                     :position="new Vector3(0, form.raw('pier_height') / 2, 0)"
-                ><LambertMaterial/></Box>
+                <Box v-bind="pierSize" :position="vec(0)"><LambertMaterial/></Box>
 
                 <!-- The middle piers, either weighted on the left or right depending on user selection -->
-                <Box :height="form.raw('pier_height')" :width="Number(form.raw('pier_width'))" :depth="Number(form.raw('pier_width'))"
+                <Box v-bind="pierSize"
                      v-for="(_, i) in range(Math.floor(form.raw('length') / form.raw('space_betw_piers_abs')!) - 1)"
-                     :position="new Vector3(
+                     :position="vec(
                         form.raw('different_final_spacing') === 'right' ?
                             (i + 1) * form.raw('space_betw_piers_abs')! :
                             form.raw('length') - ((i + 1) * form.raw('space_betw_piers_abs')!),
-                        form.raw('pier_height') / 2, 0
                      )"
                 ><LambertMaterial/></Box>
 
                 <!-- The rightmost pier -->
-                <Box :height="form.raw('pier_height')" :width="Number(form.raw('pier_width'))" :depth="Number(form.raw('pier_width'))"
-                     :position="new Vector3(form.raw('length'), form.raw('pier_height') / 2, 0)"
-                ><LambertMaterial/></Box>
+                <Box v-bind="pierSize" :position="vec(form.raw('length'))"><LambertMaterial/></Box>
             </template>
 
             <!-- The panel connecting the piers -->
-            <Box :height="form.raw('panel_height')" :depth="form.raw('panel_thickness') / 1000" :width="form.raw('length')" :position="new Vector3(form.raw('length') / 2, form.raw('panel_height') / 2, 0)">
+            <Box :height="form.raw('panel_height')" :depth="form.raw('panel_thickness') / 1000" :width="form.raw('length')"
+                 :position="vec(form.raw('length') / 2, form.raw('panel_height') / 2)"
+            >
                 <LambertMaterial/>
             </Box>
         </Scene>
