@@ -23,8 +23,8 @@ export class Form<Fields extends Record<string, string | number>> {
     }
 
     // Returns the ref of if the given element is valid
-    public valid(name: keyof Fields) {
-        return this.fields[name].valid;
+    public valid(name: keyof Fields): Ref<Validity> | undefined {
+        return this.fields[name]?.valid;
     }
 
     // Returns the ref of if the given element's value
@@ -114,7 +114,7 @@ export function dependencyIsNotSatisfied(form: Form<any>, dep: Depends): boolean
     } else if (dep instanceof Not) {
         return !dependencyIsNotSatisfied(form, dep.dep);
     } else if (typeof dep === "string") {
-        if (form.valid(dep).value !== Validity.VALID) {
+        if (form.valid(dep)?.value !== Validity.VALID) {
             return true;
         }
     } else if (form.value(dep.field).value !== dep.is) {

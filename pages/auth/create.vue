@@ -11,7 +11,7 @@ const form = new Form<Fields>();
 
 // Util functions for checking overall form validity
 function valid(s: FieldKey): boolean {
-    return form.valid(s).value === Validity.VALID;
+    return form.valid(s)?.value === Validity.VALID;
 }
 function fieldIs(field: FieldKey, value: string): boolean {
     return form.value(field).value === value;
@@ -43,7 +43,7 @@ function fillFormData(fields: Fields) {
     form.setValues(fields);
     nextTick(() => {
         // If it was a valid submission when it was submitted, it's valid now.
-        // Also, setting the values like that doesn't trigger a reactive rerender
+        // Also, setting the values like I just did doesn't trigger a reactive rerender
         formValid.value = true;
     })
 }
@@ -87,7 +87,9 @@ useHead({
 </script>
 
 <template>
-    <div class="panel w-full h-full flex mobile:flex-row flex-col gap-x-2">
+    <!-- I am well aware that these hard-coded pixel values are absolutely abysmal -->
+    <!-- if this was a real project and/or I had more time, I'd fix it, but it *works* -->
+    <div class="panel w-full h-[calc(100vh-112px)] flex mobile:flex-row flex-col gap-x-2">
         <div class="mobile:w-1/2 max-mobile:h-1/2 pb-2 pr-2 overflow-y-auto main relative">
             <!-- Again, theoretically never renders, but it's good to have for safety -->
             <div class="absolute w-full h-full flex items-center justify-center z-10 bg-t5/70 rounded-md flex-col gap-y-2" v-if="editData && editData.pending.value">
@@ -170,7 +172,7 @@ useHead({
                 {{editData ? 'Save Changes' : "Submit!"}}
             </button>
         </div>
-        <div class="aspect-square mobile:w-1/2 max-mobile:h-1/2 bg-t4 rounded-lg p-4 relative">
+        <div class="mobile:w-1/2 max-mobile:h-1/2 bg-t4 rounded-lg p-4 relative">
             <!-- We don't want the server trying to render the fence! -->
             <!-- It doesn't have access to WebGL or anything so would just crash -->
             <!-- That one took a bit of debugging.... -->

@@ -2,13 +2,11 @@
 <script setup lang="ts">
 // TroisJS is a VueJS wrapper for ThreeJS, a 3D rendering library
 import {
-    AmbientLight,
-    Box,
+    AmbientLight, Box, BufferGeometry,
     Camera,
-    LambertMaterial,
-    PointLight,
+    Mesh, PointLight,
     Renderer,
-    Scene,
+    Scene, StandardMaterial,
 } from "troisjs";
 import type {Form} from "~/components/form/form";
 import type {Fields} from "~/server/plugins/database";
@@ -69,6 +67,32 @@ function vec(x: number, y?: number) {
         z: 0
     }
 }
+
+function quad(a: number, b: number, c: number, d: number): number[] {
+    return [a,b,c,a,c,d];
+}
+
+const fencePanelIndices = [
+    ...quad(3,2,1,0), // Front
+    ...quad(4,5,6,7), // Back
+    ...quad(7,6,2,3), // Top
+    ...quad(0,1,5,4), // Bottom
+]
+
+function fencePanelVertices(width: number, height: number, depth: number) {
+    const dy = width * gradient.value;
+    const dz = depth / 2;
+    return new Float32Array([
+        /* Bottom front left */  0, 0, -dz,
+        /* Bottom front right */ width, dy, -dz,
+        /* Top front right */    width, dy + height, -dz,
+        /* Top front left */     0, height, -dz,
+        /* Bottom back left */   0, 0, depth - dz,
+        /* Bottom back right */  width, dy, depth - dz,
+        /* Top back right */     width, dy + height, depth - dz,
+        /* Top back left */      0, height, depth - dz,
+    ]);
+}
 </script>
 
 <template>
@@ -84,18 +108,18 @@ function vec(x: number, y?: number) {
             <Box v-if="form.raw('pier_spacing') === 'num_piers'" v-bind="pierSize"
                  v-for="(total, i) in range(form.raw('num_piers')!)"
                  :position="vec(i * (form.raw('length') / (total - 1)))"
-            ><LambertMaterial/></Box>
+            ><StandardMaterial/></Box>
 
             <!-- "Approximate Distance Between Piers" spacing option -->
             <Box v-else-if="form.raw('pier_spacing') === 'distance'" v-bind="pierSize"
                  v-for="(total, i) in range(Math.round(form.raw('length') / form.raw('space_betw_piers')!))"
                  :position="vec(i * (form.raw('length') / (total - 1)))"
-            ><LambertMaterial/></Box>
+            ><StandardMaterial/></Box>
 
             <!-- "Absolute Distance Between Piers" spacing option -->
             <template v-else-if="form.raw('pier_spacing') === 'absolute_dist'">
                 <!-- The leftmost pier -->
-                <Box v-bind="pierSize" :position="vec(0)"><LambertMaterial/></Box>
+                <Box v-bind="pierSize" :position="vec(0)"><StandardMaterial/></Box>
 
                 <!-- The middle piers, either weighted on the left or right depending on user selection -->
                 <Box v-bind="pierSize"
@@ -105,18 +129,18 @@ function vec(x: number, y?: number) {
                             (i + 1) * form.raw('space_betw_piers_abs')! :
                             form.raw('length') - ((i + 1) * form.raw('space_betw_piers_abs')!),
                      )"
-                ><LambertMaterial/></Box>
+                ><StandardMaterial/></Box>
 
                 <!-- The rightmost pier -->
-                <Box v-bind="pierSize" :position="vec(form.raw('length'))"><LambertMaterial/></Box>
+                <Box v-bind="pierSize" :position="vec(form.raw('length'))"><StandardMaterial/></Box>
             </template>
 
             <!-- The panel connecting the piers -->
-            <Box :height="form.raw('panel_height')" :depth="form.raw('panel_thickness') / 1000" :width="form.raw('length')"
-                 :position="vec(form.raw('length') / 2, form.raw('panel_height') / 2)"
-            >
-                <LambertMaterial/>
-            </Box>
+            <Mesh>
+                <BufferGeometry :attributes="[{name: 'position', array: fencePanelVertices(form.raw('length'), form.raw('panel_height'), form.raw('panel_thickness') / 1000), itemSize: 3}]"
+                                @created="geo => geo.setIndex(fencePanelIndices)"/>
+                <StandardMaterial :props="{flatShading: true}"/>
+            </Mesh>
         </Scene>
     </Renderer>
     <div class="absolute right-6 bottom-6 flex gap-x-2">
