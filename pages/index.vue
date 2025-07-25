@@ -8,6 +8,17 @@ const submissions: Ref<Fields[]> = fetch.data;
 useHead({
     title: "FenceDoc",
 })
+
+function remove(id: number) {
+    $fetch.raw("/api/submissions", {
+        method: "DELETE",
+        body: JSON.stringify({id})
+    }).then(res => {
+        if (res.ok) {
+            fetch.refresh();
+        }
+    })
+}
 </script>
 
 <template>
@@ -18,9 +29,10 @@ useHead({
         <div class="flex gap-x-2 mt-2">
             <NuxtLink class="tile bg-t2 hover:bg-t3 relative" v-for="submission in submissions" :href="`/auth/create?edit=${submission.id}`">
                 {{submission.name}}
-                <div class="absolute top-2 right-2">
-                    <!-- Google Icons "Delete" Icon TODO!! -->
-                    <svg class="mix-blend-difference hover:fill-[red]" fill="white" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
+                <div class="absolute top-0 right-0" @click.prevent="remove(submission.id!)">
+                    <div class="border-0 test w-0 h-0 border-t-red-500 border-r-red-500 border-transparent rounded-tr-md"></div>
+                    <!-- Google Icons "Delete" Icon -->
+                    <svg class="mix-blend-difference absolute right-2 top-2" fill="white" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
                 </div>
             </NuxtLink>
             <NuxtLink class="tile bg-t4 hover:bg-t5" href="/auth/create">
@@ -65,5 +77,15 @@ useHead({
 @reference "tailwindcss";
 .tile {
     @apply w-40 h-40 rounded-md flex items-center justify-center flex-col cursor-pointer transition-colors;
+}
+.test {
+    :hover > & {
+        border-width: 25px;
+    }
+    transition: border-width 500ms;
+}
+:hover > .mix-blend-difference {
+    mix-blend-mode: normal;
+    z-index: 10;
 }
 </style>

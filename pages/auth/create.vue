@@ -29,14 +29,17 @@ const editData = ("edit" in route.query && !Number.isNaN(Number.parseInt(route.q
     }
 }) : null;
 
-if (editData) {
+if (editData && editData.data.value) {
     // Fill the form with the edited submission's data
     if (editData.pending.value) {
         // This code path theoretically never runs since SSR is active, and useFetch doesn't use a network request, but I put it here for safety
         watch(editData.data as Ref<Fields>, fillFormData);
     } else {
-        fillFormData(editData.data.value!);
+        fillFormData(editData.data.value);
     }
+} else {
+    // Clear query parameter
+    router.push({});
 }
 
 function fillFormData(fields: Fields) {

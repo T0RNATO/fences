@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
 @import "tailwindcss";
+@custom-variant hover (&:hover);
 
 /* For some reason Webstorm doesn't recognise light-dark()... in 2025 */
 /*noinspection CssInvalidFunction*/
