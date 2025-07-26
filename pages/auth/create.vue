@@ -54,7 +54,7 @@ function fillFormData(fields: Fields) {
 // Re-assess overall form validity on every update.
 // This should really be reactive but I'm hacking around Vue's reactivity system too much for that too work.
 form.onChange(() => {
-    if (valid("panel_thickness") && valid('pier_spacing')) {
+    if (valid("panel_thickness") && valid('pier_spacing') && valid('name')) {
         if (
             (fieldIs('pier_spacing', 'num_piers') && valid('num_piers')) ||
             (fieldIs('pier_spacing', 'distance') && valid('space_betw_piers')) ||
@@ -69,6 +69,7 @@ form.onChange(() => {
     formValid.value = false;
 });
 
+// If the form can be submitted and if the renderer can render
 const formValid = ref(false);
 
 function submit() {
@@ -104,30 +105,31 @@ useHead({
                 For any enquiries not fulfilled by this form and the comments box, please contact foo@bar.com.
             </div>
             <div class="my-2 sm:grid sm:grid-cols-[30%_70%] items-center gap-y-2 text-sm">
+                <!-- The form itself. Hopefully the Text properties are self-explanatory. -->
+                <!-- After all, the best code needs no comments as it explains itself. -->
                 <h3>General</h3>
                 <Text :form="form" name="name" maxlength="127" display="Submission Name:"/>
-                <Text :form="form" name="length" units="metres" :number="true" :validate="value => value > 0" error="Must be >0">
+                <Text :form="form" name="length" units="metres" :number="true" :validate="value => value > 0 && value <= 100" error="Must be between 0 & 100.">
                     Property Frontage:<br class="max-sm:hidden">(Fence Length)
                 </Text>
                 Pier Width:
                 <Radio :form="form" name="pier_width" :options="{0.23: '230mm', 0.35: '350mm', 0.47: '470mm', 0.59: '590mm'}" depends="length"/>
-                <Text :form="form" name="pier_height" units="metres" :number="true" display="Pier Height:"/>
-<!--                Maximum Height:<br class="max-sm:hidden">(For error checking)-->
-<!--                <Text :form="form" name="max_height" units="metres" :number="true" depends="pier_height"/>-->
-                <Text :form="form" name="panel_height" units="metres" :number="true" depends="pier_height" display="Fence Panel Height:"/>
-                <Text :form="form" name="panel_thickness" units="millimetres" :number="true" depends="panel_height" display="Fence Panel Thickness:"/>
+                <Text :form="form" name="pier_height" units="metres" :number="true" display="Pier Height:" :validate="value => value > 0 && value <= 10" error="Must be between 0 & 10."/>
+                <Text :form="form" name="panel_height" units="metres" :number="true" depends="pier_height" display="Fence Panel Height:" :validate="value => value > 0 && value <= form.raw('pier_height')" error="Must be between 0 & pier height."/>
+                <Text :form="form" name="panel_thickness" units="millimetres" :number="true" depends="panel_height" display="Fence Panel Thickness:" :validate="value => value > 0 && value <= Number(form.raw('pier_width')) * 1000" error="Must be between 0 & pier width."/>
 
                 <h3>Pier Spacing</h3>
                 <Radio :form="form" name="pier_spacing" class="col-span-2 flex-col" depends="pier_width" dots :options="{
                     num_piers: 'Evenly space $a$ piers',
                     distance: 'Evenly space piers approx. $b$ metres apart',
                     absolute_dist: 'Space piers $c$ metres apart, with a different final spacing on the $d$'
-                    // manual setting?
+                    // TODO: a setting that allows manual placement of all piers
                 }">
                     <!-- These are slotted in where the $letters$ are above - see ~/components/Radio.vue -->
                     <template #a>
                         <Text :form="form" name="num_piers" :number="true"
-                              :validate="value => Boolean(value) && Number.isInteger(value)"
+                              :validate="value => Number.isInteger(value) && value >= 0 && value < form.raw('length') / Number(form.raw('pier_width'))"
+                              error="Does not fit on property."
                               :depends="{field: 'pier_spacing', is: 'num_piers'}" class="!mx-1 h-8 w-12"
                               aria-label="Number of piers"
                         />
@@ -135,11 +137,15 @@ useHead({
                         <Text :form="form" name="space_betw_piers" :number="true"
                               :depends="{field: 'pier_spacing', is: 'distance'}" class="!mx-1 h-8 w-12"
                               aria-label="Approximate space between piers"
+                              :validate="value => value > Number(form.raw('pier_width')) && value <= form.raw('length')"
+                              error="Does not fit on property."
                         />
                     </template> <template #c>
                         <Text :form="form" name="space_betw_piers_abs" :number="true"
                               :depends="{field: 'pier_spacing', is: 'absolute_dist'}" class="!mx-1 h-8 w-12"
                               aria-label="Exact space between piers"
+                              :validate="value => value > Number(form.raw('pier_width')) && value <= form.raw('length')"
+                              error="Does not fit on property."
                         />
                     </template> <template #d>
                         <Radio :form="form" name="different_final_spacing" :options="{left: 'Left', right: 'Right'}"
@@ -164,6 +170,8 @@ useHead({
                     /
                     <Text class="w-15" placeholder="run" :form="form" name="run" :number="true"
                           :depends="all({field: 'is_gradient', is: 'yes'}, not('gradient'))"
+                          :validate="value => value > 0"
+                          error="Must be greater than 0."
                           aria-label="Gradient Run" />
                 </div>
                 <h3>Submission</h3>

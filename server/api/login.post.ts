@@ -28,6 +28,5 @@ export default defineEventHandler(async (event) => {
         loggedInAt: Date.now(),
     })
 
-    // return sendRedirect(event, "/", 201);
     return setResponseStatus(event, 201);
 })

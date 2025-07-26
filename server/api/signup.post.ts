@@ -1,4 +1,4 @@
-import {User, UserSchema} from "~/server/plugins/database";
+import {UserSchema} from "~/server/plugins/database";
 
 // Logs a user into a newly created account
 export default defineEventHandler(async (event) => {
@@ -15,20 +15,22 @@ export default defineEventHandler(async (event) => {
 
     const hashedPassword = await hashPassword(password);
 
-    try {
-        const user = (await db.sql<{ rows: User[] }>`INSERT INTO users(email, password) VALUES (${email}, ${hashedPassword})`).rows[0];
+    const alreadyExists = await db.sql`SELECT EXISTS(SELECT 1 FROM users WHERE email = ${email})`;
+
+    if (!alreadyExists.rows?.[0]?.['EXISTS(SELECT 1 FROM users WHERE email = ?)']) {
+        const id = (await db.sql`INSERT INTO users(email, password) VALUES (${email}, ${hashedPassword})`).lastInsertRowid;
 
         await setUserSession(event, {
             user: {
                 email,
-                id: user.id,
+                id,
             },
             loggedInAt: Date.now(),
         });
 
         return setResponseStatus(event, 201);
-    } catch (err) {
+    } else {
         setResponseStatus(event, 400);
-        return [{path: ["email"], message: "Email already has an associated account."}]
+        return [{path: ["email"], message: "Email already has an associated account."}];
     }
 })

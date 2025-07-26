@@ -47,11 +47,13 @@ watch(props.form.value('pier_height'), resetCamera);
 
 const range = (n: number) => new Array(n).fill(n);
 
+// Property gradient, or 0 if unset.
 const gradient = computed(() => {
     return props.form.raw("is_gradient") == "no" ? 0 :
         (props.form.raw("gradient")! / 100 || props.form.raw("rise")! / props.form.raw("run")!)
 })
 
+// The size of the piers
 const pierSize = computed(() => {
     return {
         width: Number(props.form.raw('pier_width')),
@@ -60,6 +62,7 @@ const pierSize = computed(() => {
     }
 })
 
+// Util function for the template - returns a vector representing the position of a pier
 function vec(x: number, y?: number) {
     return {
         x,
@@ -68,10 +71,13 @@ function vec(x: number, y?: number) {
     }
 }
 
+// A util function that returns two triangles, forming a quad
 function quad(a: number, b: number, c: number, d: number): number[] {
     return [a,b,c,a,c,d];
 }
 
+// These are indices into the vertices that are generated in the function below, used for rendering the trapezoidal prism that is the fence panel.
+// Each set of three indices defines a triangle between three vertices - this shape includes eight triangles making four rectangular faces.
 const fencePanelIndices = [
     ...quad(3,2,1,0), // Front
     ...quad(4,5,6,7), // Back
@@ -79,18 +85,20 @@ const fencePanelIndices = [
     ...quad(0,1,5,4), // Bottom
 ]
 
+// Generates the vertices for the fence panel.
 function fencePanelVertices(width: number, height: number, depth: number) {
     const dy = width * gradient.value;
     const dz = depth / 2;
+    // A list of vertices - each set of three values is an x,y,z coordinate.
     return new Float32Array([
-        /* Bottom front left */  0, 0, -dz,
+        /* Bottom front left  */ 0, 0, -dz,
         /* Bottom front right */ width, dy, -dz,
-        /* Top front right */    width, dy + height, -dz,
-        /* Top front left */     0, height, -dz,
-        /* Bottom back left */   0, 0, depth - dz,
-        /* Bottom back right */  width, dy, depth - dz,
-        /* Top back right */     width, dy + height, depth - dz,
-        /* Top back left */      0, height, depth - dz,
+        /* Top front right    */ width, dy + height, -dz,
+        /* Top front left     */ 0, height, -dz,
+        /* Bottom back left   */ 0, 0, depth - dz,
+        /* Bottom back right  */ width, dy, depth - dz,
+        /* Top back right     */ width, dy + height, depth - dz,
+        /* Top back left      */ 0, height, depth - dz,
     ]);
 }
 </script>
@@ -112,7 +120,7 @@ function fencePanelVertices(width: number, height: number, depth: number) {
 
             <!-- "Approximate Distance Between Piers" spacing option -->
             <Box v-else-if="form.raw('pier_spacing') === 'distance'" v-bind="pierSize"
-                 v-for="(total, i) in range(Math.round(form.raw('length') / form.raw('space_betw_piers')!))"
+                 v-for="(total, i) in range(Math.max(Math.round(form.raw('length') / form.raw('space_betw_piers')!) + 1, 2))"
                  :position="vec(i * (form.raw('length') / (total - 1)))"
             ><StandardMaterial/></Box>
 
@@ -134,6 +142,7 @@ function fencePanelVertices(width: number, height: number, depth: number) {
                 <!-- The rightmost pier -->
                 <Box v-bind="pierSize" :position="vec(form.raw('length'))"><StandardMaterial/></Box>
             </template>
+            <!-- TODO: It'd be nice if it said the distances like on an architectural drawing. Won't get into text rendering now though. -->
 
             <!-- The panel connecting the piers -->
             <Mesh>
@@ -144,13 +153,16 @@ function fencePanelVertices(width: number, height: number, depth: number) {
         </Scene>
     </Renderer>
     <div class="absolute right-6 bottom-6 flex gap-x-2">
+        <!-- Reset Camera Button -->
         <button class="aspect-square" @click="resetCamera">
             <!--Google Icons "Recenter" Icon-->
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M440-40v-167l-44 43-56-56 140-140 140 140-56 56-44-43v167h-80ZM220-340l-56-56 43-44H40v-80h167l-43-44 56-56 140 140-140 140Zm520 0L600-480l140-140 56 56-43 44h167v80H753l43 44-56 56Zm-260-80q-25 0-42.5-17.5T420-480q0-25 17.5-42.5T480-540q25 0 42.5 17.5T540-480q0 25-17.5 42.5T480-420Zm0-180L340-740l56-56 44 43v-167h80v167l44-43 56 56-140 140Z"/></svg>
         </button>
+        <!-- Toggle Auto-Rotate Button -->
         <button class="aspect-square" @click="autoRotate = !autoRotate; renderer!.three.cameraCtrl!.autoRotate = autoRotate">
             <!--Google Icons "360" Icon-->
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="m360-160-56-56 70-72q-128-17-211-70T80-480q0-83 115.5-141.5T480-680q169 0 284.5 58.5T880-480q0 62-66.5 111T640-296v-82q77-20 118.5-49.5T800-480q0-32-85.5-76T480-600q-149 0-234.5 44T160-480q0 24 51 57.5T356-372l-52-52 56-56 160 160-160 160Z"/></svg>        </button>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="m360-160-56-56 70-72q-128-17-211-70T80-480q0-83 115.5-141.5T480-680q169 0 284.5 58.5T880-480q0 62-66.5 111T640-296v-82q77-20 118.5-49.5T800-480q0-32-85.5-76T480-600q-149 0-234.5 44T160-480q0 24 51 57.5T356-372l-52-52 56-56 160 160-160 160Z"/></svg>
+        </button>
     </div>
 </template>
 
