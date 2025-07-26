@@ -1,4 +1,4 @@
-import {User, UserSchema} from "~/server/plugins/database";
+import {type User, UserSchema} from "~/server/plugins/database";
 
 // Logs a user into an existing account
 export default defineEventHandler(async (event) => {

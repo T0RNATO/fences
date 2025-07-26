@@ -8,7 +8,7 @@ export default defineEventHandler(async event => {
     }
 
     const db = useDatabase();
-    const submissions = await db.sql`DELETE FROM submissions WHERE user = ${session.user.id} AND id = ${body.id}`
+    await db.sql`DELETE FROM submissions WHERE user = ${session.user.id} AND id = ${body.id}`
 
     return setResponseStatus(event, 200);
 })

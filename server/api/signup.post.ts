@@ -4,6 +4,8 @@ import {UserSchema} from "~/server/plugins/database";
 export default defineEventHandler(async (event) => {
     const db = useDatabase();
 
+    // Validate data using Zod - specifically, check for 8+ character password and valid email.
+    // You can look at the schema in "~/server/plugins/database"
     const validation = await readValidatedBody(event, UserSchema.safeParse);
 
     if (!validation.success) {
@@ -18,6 +20,7 @@ export default defineEventHandler(async (event) => {
     const alreadyExists = await db.sql`SELECT EXISTS(SELECT 1 FROM users WHERE email = ${email})`;
 
     if (!alreadyExists.rows?.[0]?.['EXISTS(SELECT 1 FROM users WHERE email = ?)']) {
+        // Create an account and log them into it
         const id = (await db.sql`INSERT INTO users(email, password) VALUES (${email}, ${hashedPassword})`).lastInsertRowid;
 
         await setUserSession(event, {
